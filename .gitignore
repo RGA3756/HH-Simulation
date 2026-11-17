@@ -6,3 +6,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Personal notes kept out of the public repository
+README_personal.md
