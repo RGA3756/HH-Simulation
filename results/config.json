@@ -1,0 +1,172 @@
+{
+  "membrane": {
+    "C_m": 1.0,
+    "g_Na": 120.0,
+    "g_K": 36.0,
+    "g_L": 0.3,
+    "E_Na": 50.0,
+    "E_K": -77.0,
+    "E_L": -54.3
+  },
+  "D_coupling_uA_per_mV": 0.33615819209039555,
+  "T_REF_C": 6.3,
+  "Q10": 3.0,
+  "VTRAP_SMALL": 1e-06,
+  "V_REST_EXPECTED_MV": -65.0,
+  "V_REST_TOLERANCE_MV": 0.5,
+  "V_REST_BRACKET_MV": [
+    -80.0,
+    -50.0
+  ],
+  "RADIUS_CM": 0.0238,
+  "R_I_OHM_CM": 35.4,
+  "LENGTH_CM": 5.0,
+  "MA_PER_CM2_TO_UA_PER_CM2": 1000.0,
+  "D_COUPLING": 0.33615819209039555,
+  "STIM_START_MS": 0.1,
+  "STIM_DURATION_MS": 0.3,
+  "THRESHOLD_T_C": 6.3,
+  "THRESHOLD_TOL_UA": 0.1,
+  "THRESHOLD_BRACKET_UA": [
+    0.0,
+    200.0
+  ],
+  "AMP_FACTOR_PRIMARY": 2.0,
+  "AMP_FACTOR_VARIANT": 4.0,
+  "CABLE_STIM_AMP_UA": 2000.0,
+  "CABLE_STIM_X_MAX_CM": 0.1,
+  "DT_MEMBRANE_MS": 0.005,
+  "REF_METHOD": "DOP853",
+  "REF_RTOL": 1e-10,
+  "REF_ATOL": 1e-12,
+  "DX_CABLE_CM": 0.01,
+  "DT_CABLE_MS": 0.005,
+  "SNAPSHOT_EVERY_MS": 0.05,
+  "RECORD_X_CM": [
+    2.0,
+    2.5,
+    3.0,
+    4.0
+  ],
+  "MEASURE_X_CM": 2.5,
+  "VELOCITY_X_CM": [
+    2.0,
+    3.0
+  ],
+  "PROPAGATION_X_CM": 4.0,
+  "PROPAGATION_V_MV": 0.0,
+  "REST_RETURN_TOL_MV": 0.5,
+  "T_MAX_MS": 100.0,
+  "CHUNK_MS": 5.0,
+  "NO_SPIKE_STOP_MS": 30.0,
+  "PASSIVE_RUN_MS": 10.0,
+  "CABLE_ARRIVAL_MARGIN_MV": 10.0,
+  "CABLE_FAR_NODE_WAIT_MS": 5.0,
+  "SPIKE_V_MIN_MV": 0.0,
+  "SPIKE_MARGIN_OVER_PASSIVE_MV": 20.0,
+  "RAW_ONSET_MARGIN_MV": 1.0,
+  "RAW_END_TOL_MV": 1.0,
+  "DIAG_WAVE_RATIO": 0.9,
+  "DIAG_WAVE_MIN_DEPOL_MV": 20.0,
+  "DIAG_WAVE_X_CM": [
+    2.0,
+    4.0
+  ],
+  "ELEMENTARY_CHARGE_C": 1.602176634e-19,
+  "NA_PER_ATP": 3.0,
+  "UM2_PER_CM2": 100000000.0,
+  "SWEEP_T_FIRST_C": 6.3,
+  "SWEEP_T_GRID_START_C": 8.0,
+  "SWEEP_T_STEP_C": 2.0,
+  "SWEEP_T_EXTRA_C": [
+    18.5
+  ],
+  "SWEEP_T_CAP_C": 60.0,
+  "FAILURE_BISECT_TOL_C": 0.05,
+  "FAILURE_GRID_TOL_C": 0.01,
+  "T_FAIL_ABOUT_SHIFT_C": 0.1,
+  "VALIDATION_T_C": 18.5,
+  "HH1952_VELOCITY_COMPUTED_M_S": 18.8,
+  "HH1952_VELOCITY_MEASURED_M_S": 21.2,
+  "CABLE_REFINEMENT": [
+    [
+      0.01,
+      0.005
+    ],
+    [
+      0.005,
+      0.0025
+    ],
+    [
+      0.0025,
+      0.00125
+    ]
+  ],
+  "MEMBRANE_REFINEMENT": [
+    0.005,
+    0.0025,
+    0.00125
+  ],
+  "T_WARM_OFFSET_C": 2.0,
+  "DELTA_R_FLAG_FACTOR": 2.0,
+  "PASSIVE_TEST_I_UA": 50.0,
+  "PASSIVE_TEST_RUN_MS": 60.0,
+  "PASSIVE_TEST_TOL": 0.01,
+  "COLOR_NA": "#D9772B",
+  "COLOR_K": "#3B6E9E",
+  "FIG_DPI": 300,
+  "FIG_WIDTH_FULL_CM": 16.0,
+  "FIG_WIDTH_SINGLE_CM": 8.0,
+  "FONT_SIZE_PT": 9,
+  "GIF_DURATION_S": 8.0,
+  "GIF_FPS": 20,
+  "WEB_N_POSITIONS": 100,
+  "WEB_N_FRAMES": 300,
+  "JS_CONSISTENCY_T_C": [
+    6.3,
+    18.5
+  ],
+  "JS_CONSISTENCY_TOL": 0.005,
+  "derived": {
+    "threshold_uA_cm2": 21.875,
+    "threshold_bracket_uA_cm2": [
+      21.77734375,
+      21.875
+    ],
+    "amp_primary_uA_cm2": 43.75,
+    "amp_variant_uA_cm2": 87.5,
+    "temperatures_C": [
+      6.3,
+      8.0,
+      10.0,
+      12.0,
+      14.0,
+      16.0,
+      18.0,
+      18.5,
+      20.0,
+      22.0,
+      24.0,
+      26.0,
+      28.0,
+      30.0,
+      32.0,
+      34.0
+    ],
+    "T_warm_C": 26.0,
+    "T_highest_propagating_coarse_C": 28.0,
+    "T_edge_C": 28.0,
+    "T_last_both_C": 28.78125,
+    "explicit_stability_number": 16.80790960451978,
+    "rest": {
+      "V": -64.97405245162668,
+      "m": 0.053094651784847305,
+      "h": 0.5952130171676474,
+      "n": 0.31807461723758995,
+      "I_Na": -1.2291526910030013,
+      "I_K": 4.4313684264910105,
+      "I_L": -3.2022157354880036
+    },
+    "n_nodes_base": 501
+  }
+}

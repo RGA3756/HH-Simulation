@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HH Energy Explorer</title>
+<style>
+:root {
+  --bg: #f6f6f3; --card: #ffffff; --ink: #1a1a1a; --ink2: #52514e; --muted: #8a8983;
+  --grid: #e8e7e1; --axis: #b9b8b0; --border: rgba(0, 0, 0, 0.09);
+  --na: #D9772B; --k: #3B6E9E; --accent: #a8326e;
+  --overlap: rgba(140, 140, 140, 0.30); --qmin: rgba(217, 119, 43, 0.50);
+  --v0: #f3f1fa; --v1: #b9b1de; --v2: #6a58b8; --v3: #2a1866;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111110; --card: #1b1b1a; --ink: #f2f2ef; --ink2: #c3c2b7; --muted: #8f8e88;
+    --grid: #2c2c2a; --axis: #4b4b47; --border: rgba(255, 255, 255, 0.10);
+    --na: #E58A45; --k: #6A9BD1; --accent: #d0659a;
+    --overlap: rgba(200, 200, 200, 0.20); --qmin: rgba(229, 138, 69, 0.50);
+    --v0: #24223a; --v1: #4b4185; --v2: #8f80dd; --v3: #ece8ff;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1140px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { color: var(--ink2); margin: 0 0 20px; max-width: 75ch; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+        padding: 16px 18px; margin-bottom: 16px; min-width: 0; }
+.card h2 { font-size: 1.05rem; margin: 0 0 2px; }
+.hint { color: var(--ink2); font-size: 0.88rem; margin: 0 0 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid2 > .card { margin-bottom: 0; }
+.row-gap { height: 16px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+canvas { width: 100%; display: block; }
+.slider-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.slider-row input[type=range] { flex: 1; min-width: 220px; accent-color: var(--accent); height: 28px; }
+.tval { font-size: 1.6rem; font-weight: 650; min-width: 7.5ch; font-variant-numeric: tabular-nums; }
+.phi { color: var(--ink2); }
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 12px; }
+.ro { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
+.ro .lab { color: var(--ink2); font-size: 0.78rem; }
+.ro .val { font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ro .py { color: var(--muted); font-size: 0.74rem; min-height: 1.1em; font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.84rem; color: var(--ink2); margin: 6px 0 2px; }
+.sw { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.sw.box { height: 10px; border-radius: 2px; }
+.sw.dash { background: repeating-linear-gradient(90deg, var(--ink) 0 5px, transparent 5px 8px) !important; }
+.status { margin-top: 10px; font-size: 0.88rem; color: var(--ink2); }
+.status.warn { color: var(--accent); }
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: 0.88rem; color: var(--ink2); }
+button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--border);
+         border-radius: 8px; padding: 4px 12px; cursor: pointer; }
+button:hover { background: var(--grid); }
+select { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 3px 6px; }
+.explain p { margin: 0 0 10px; }
+.explain b { font-weight: 600; }
+footer { color: var(--muted); font-size: 0.8rem; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>How much sodium does a spike cost?</h1>
+  <p class="sub">Hodgkin–Huxley squid axon. Move the temperature slider. The membrane patch on the left is
+    re-simulated live in your browser. The travelling spike on the right was computed in Python for the
+    nearest sweep temperature.</p>
+
+  <section class="card">
+    <h2>Temperature</h2>
+    <div class="slider-row">
+      <input id="temp" type="range" autocomplete="off" aria-label="Temperature in degrees Celsius">
+      <span class="tval" id="tval"></span>
+      <span class="phi" id="phi"></span>
+    </div>
+    <p class="hint" id="rangeNote" style="margin-top:6px"></p>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Membrane patch (live simulation)</h2>
+      <p class="hint" id="memHint"></p>
+      <canvas id="cvV" height="170"></canvas>
+      <canvas id="cvI" height="210" style="margin-top:6px"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--na)"></span>Na⁺ entering, Ĩ<sub>Na</sub></span>
+        <span><span class="sw" style="background:var(--k)"></span>K⁺ leaving, I<sub>K</sub></span>
+        <span><span class="sw box" style="background:var(--overlap)"></span>overlap (both flowing)</span>
+        <span><span class="sw box" style="background:var(--qmin)"></span>first Q<sub>min</sub> of Na⁺</span>
+      </div>
+      <div class="readouts">
+        <div class="ro"><div class="lab">Q<sub>Na</sub> (nC/cm²)</div><div class="val" id="roQna">–</div><div class="py" id="pyQna"></div></div>
+        <div class="ro"><div class="lab">Q<sub>min</sub> (nC/cm²)</div><div class="val" id="roQmin">–</div><div class="py" id="pyQmin"></div></div>
+        <div class="ro"><div class="lab">r = Q<sub>Na</sub>/Q<sub>min</sub></div><div class="val" id="roR">–</div><div class="py" id="pyR"></div></div>
+        <div class="ro"><div class="lab">efficiency η</div><div class="val" id="roEta">–</div><div class="py"></div></div>
+        <div class="ro"><div class="lab">ATP per µm²</div><div class="val" id="roAtp">–</div><div class="py"></div></div>
+        <div class="ro"><div class="lab">Na⁺ after peak</div><div class="val" id="roOv">–</div><div class="py"></div></div>
+      </div>
+      <div class="status" id="memStatus"></div>
+    </section>
+
+    <section class="card">
+      <h2>Travelling spike along the 5 cm axon</h2>
+      <p class="hint" id="travHint"></p>
+      <canvas id="cvAxon" height="300"></canvas>
+      <div class="controls">
+        <button id="play" type="button">Pause</button>
+        <label>speed
+          <select id="speed">
+            <option value="0.5">0.5 ms per second</option>
+            <option value="1" selected>1 ms per second</option>
+            <option value="2">2 ms per second</option>
+          </select>
+        </label>
+        <span id="tclock"></span>
+      </div>
+      <div class="readouts">
+        <div class="ro"><div class="lab">shown T</div><div class="val" id="roTT">–</div><div class="py">nearest sweep temperature</div></div>
+        <div class="ro"><div class="lab">velocity θ (m/s)</div><div class="val" id="roTheta">–</div><div class="py">Python sweep</div></div>
+        <div class="ro"><div class="lab">r (travelling)</div><div class="val" id="roRT">–</div><div class="py">Python sweep, x = 2.5 cm</div></div>
+      </div>
+    </section>
+  </div>
+  <div class="row-gap"></div>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>r against temperature</h2>
+      <p class="hint">Lines: Python sweep. Dot: the live JavaScript membrane result at the slider temperature.</p>
+      <canvas id="cvR" height="280"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--ink)"></span>membrane spike (2× threshold)</span>
+        <span><span class="sw dash"></span>travelling spike</span>
+        <span><span class="sw" style="background:var(--accent);width:10px;height:10px;border-radius:50%"></span>live value</span>
+      </div>
+    </section>
+
+    <section class="card explain">
+      <h2>The bucket and the open drain</h2>
+      <p>Think of the membrane as a <b>bucket</b> (an electrical capacitor). To fire a spike, positive
+        charge has to fill it from the resting level up to the peak. The smallest amount that could
+        possibly do the job is <b>Q<sub>min</sub> = C<sub>m</sub> × (V<sub>peak</sub> − V<sub>rest</sub>)</b>.</p>
+      <p>Sodium entering the cell is the <b>tap</b>. But the potassium channels are a <b>drain</b> that opens
+        while the tap is still running. Water pours in and straight out again. Everything that came through
+        the tap is <b>Q<sub>Na</sub></b>. The part that flowed in while the drain was open is the
+        <b>overlap</b>.</p>
+      <p><b>r = Q<sub>Na</sub> / Q<sub>min</sub></b> says how many bucketfuls you paid for per bucketful you
+        needed. Efficiency is η = 100% / r. The cell pays for every 3 sodium ions with one ATP molecule,
+        when its pump pushes them back out.</p>
+      <p><b>Warming</b> makes every gate open and close faster (×3 per 10 °C). The tap shuts sooner after the
+        peak, so less sodium is wasted and r falls. The spike also gets smaller, and above about 29 °C its
+        peak no longer reaches 0 mV.</p>
+    </section>
+  </div>
+
+  <footer id="foot"></footer>
+</main>
+
+<script id="hh-data" type="application/json">__HH_DATA__</script>
+
+<script id="hh-model">
+/* Hodgkin–Huxley membrane patch: a line-by-line JavaScript port of
+   hh_energy/rates.py, hh_energy/membrane.py and the primary measurements of
+   hh_energy/metrics.py. Same equations, same RK4 step, same stimulus pieces,
+   same run-length rule. Units: mV, ms, µA/cm², nC/cm². No DOM access here, so
+   this block can also be run headless (tests/js_consistency.mjs). */
+globalThis.HHModel = function (p) {
+  "use strict";
+  function vtrap(x, y) {
+    const u = x / y;
+    return Math.abs(u) < p.VTRAP_SMALL ? y * (1.0 - u / 2.0) : x / (Math.exp(u) - 1.0);
+  }
+  function rates(V) {
+    return [0.1 * vtrap(-(V + 40.0), 10.0), 4.0 * Math.exp(-(V + 65.0) / 18.0),
+            0.07 * Math.exp(-(V + 65.0) / 20.0), 1.0 / (1.0 + Math.exp(-(V + 35.0) / 10.0)),
+            0.01 * vtrap(-(V + 55.0), 10.0), 0.125 * Math.exp(-(V + 65.0) / 80.0)];
+  }
+  const phi = T => Math.pow(p.Q10, (T - p.T_REF_C) / 10.0);
+  function steady(V) {
+    const r = rates(V);
+    return [r[0] / (r[0] + r[1]), r[2] / (r[2] + r[3]), r[4] / (r[4] + r[5])];
+  }
+  function currents(V, m, h, n, gNa) {
+    return [gNa * m * m * m * h * (V - p.E_Na), p.g_K * n * n * n * n * (V - p.E_K), p.g_L * (V - p.E_L)];
+  }
+  function totalSS(V) {
+    const s = steady(V), c = currents(V, s[0], s[1], s[2], p.g_Na);
+    return c[0] + c[1] + c[2];
+  }
+  function restingState() {
+    let lo = p.V_REST_BRACKET_MV[0], hi = p.V_REST_BRACKET_MV[1], flo = totalSS(lo);
+    for (let i = 0; i < 200 && hi - lo > 1e-13; i++) {
+      const mid = 0.5 * (lo + hi), fm = totalSS(mid);
+      if ((fm < 0) === (flo < 0)) { lo = mid; flo = fm; } else { hi = mid; }
+    }
+    const V = 0.5 * (lo + hi), s = steady(V), c = currents(V, s[0], s[1], s[2], p.g_Na);
+    return { V: V, m: s[0], h: s[1], n: s[2], I_Na: c[0], I_K: c[1], I_L: c[2] };
+  }
+  const REST = restingState();
+
+  function rhs(y, I, ph, gNa, out) {
+    const V = y[0], m = y[1], h = y[2], n = y[3];
+    const r = rates(V), c = currents(V, m, h, n, gNa);
+    out[0] = (-(c[0] + c[1] + c[2]) + I) / p.C_m;
+    out[1] = ph * (r[0] * (1.0 - m) - r[1] * m);
+    out[2] = ph * (r[2] * (1.0 - h) - r[3] * h);
+    out[3] = ph * (r[4] * (1.0 - n) - r[5] * n);
+  }
+
+  /* Run-length rule (membrane.py _end_index). Returns {index, met} or null. */
+  function endIndex(V, dt) {
+    const tol = p.REST_RETURN_TOL_MV, Vr = REST.V;
+    let ip = 0;
+    for (let i = 1; i < V.length; i++) if (V[i] > V[ip]) ip = i;
+    if (V[ip] <= p.SPIKE_V_MIN_MV) {
+      const x = p.NO_SPIKE_STOP_MS - 1e-9;
+      let k = Math.max(0, Math.floor(x / dt) - 2);
+      while (k * dt < x) k++;
+      return k < V.length ? { index: k, met: false } : null;
+    }
+    let j0 = -1;
+    for (let i = ip; i < V.length; i++) if (V[i] < Vr - tol) { j0 = i; break; }
+    if (j0 < 0) return null;
+    for (let i = j0; i < V.length; i++) if (V[i] >= Vr - tol) return { index: i, met: true };
+    return null;
+  }
+
+  /* simulate(T, amp, gNa, tEnd): tEnd = null -> adaptive run length (as in Python). */
+  function simulate(T, amp, gNa, tEnd) {
+    const dt = p.DT_MEMBRANE_MS, ph = phi(T);
+    const V = [REST.V], M = [REST.m], H = [REST.h], N = [REST.n];
+    let y = [REST.V, REST.m, REST.h, REST.n];
+    const k1 = [0, 0, 0, 0], k2 = [0, 0, 0, 0], k3 = [0, 0, 0, 0], k4 = [0, 0, 0, 0], tmp = [0, 0, 0, 0];
+    function advance(nSteps, I) {
+      for (let s = 0; s < nSteps; s++) {
+        rhs(y, I, ph, gNa, k1);
+        for (let j = 0; j < 4; j++) tmp[j] = y[j] + 0.5 * dt * k1[j];
+        rhs(tmp, I, ph, gNa, k2);
+        for (let j = 0; j < 4; j++) tmp[j] = y[j] + 0.5 * dt * k2[j];
+        rhs(tmp, I, ph, gNa, k3);
+        for (let j = 0; j < 4; j++) tmp[j] = y[j] + dt * k3[j];
+        rhs(tmp, I, ph, gNa, k4);
+        const yn = [0, 0, 0, 0];
+        for (let j = 0; j < 4; j++) yn[j] = y[j] + (dt / 6.0) * (k1[j] + 2.0 * k2[j] + 2.0 * k3[j] + k4[j]);
+        y = yn;
+        V.push(y[0]); M.push(y[1]); H.push(y[2]); N.push(y[3]);
+      }
+    }
+    const nOff = Math.round(p.STIM_START_MS / dt), nOn = Math.round(p.STIM_DURATION_MS / dt);
+    advance(nOff, 0.0);
+    advance(nOn, amp);
+    let end, met = false;
+    if (tEnd !== null) {
+      advance(Math.round(tEnd / dt) - nOff - nOn, 0.0);
+      end = V.length - 1;
+    } else {
+      const chunk = Math.round(p.CHUNK_MS / dt), cap = Math.round(p.T_MAX_MS / dt);
+      advance(chunk, 0.0);
+      for (;;) {
+        const e = endIndex(V, dt);
+        if (e) { end = e.index; met = e.met; break; }
+        if (V.length - 1 >= cap) { end = V.length - 1; break; }
+        advance(Math.min(chunk, cap - (V.length - 1)), 0.0);
+      }
+    }
+    const n = end + 1, t = new Float64Array(n), INa = new Float64Array(n), IK = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      t[i] = i * dt;
+      const c = currents(V[i], M[i], H[i], N[i], gNa);
+      INa[i] = c[0]; IK[i] = c[1];
+    }
+    return { t: t, V: V.slice(0, n), m: M.slice(0, n), h: H.slice(0, n), n: N.slice(0, n),
+             INa: INa, IK: IK, backToRest: met };
+  }
+
+  function peak(t, V) {
+    let i = 0;
+    for (let k = 1; k < V.length; k++) if (V[k] > V[i]) i = k;
+    if (i > 0 && i < V.length - 1) {
+      const y0 = V[i - 1], y1 = V[i], y2 = V[i + 1], den = y0 - 2.0 * y1 + y2;
+      if (den < 0) {
+        const d = 0.5 * (y0 - y2) / den;
+        return { t: t[i] + d * (t[i + 1] - t[i]), V: y1 - 0.25 * (y0 - y2) * d, i: i };
+      }
+    }
+    return { t: t[i], V: V[i], i: i };
+  }
+  function crossAt(t, V, level, j) {
+    const f = (level - V[j]) / (V[j + 1] - V[j]);
+    return t[j] + f * (t[j + 1] - t[j]);
+  }
+  function crossing(t, V, level, start, dir) {
+    for (let j = start; j < V.length - 1; j++) {
+      const a = V[j] - level, b = V[j + 1] - level;
+      if (dir === "up" ? (a < 0 && b >= 0) : (a > 0 && b <= 0)) return crossAt(t, V, level, j);
+    }
+    return NaN;
+  }
+  function lastCrossingBefore(t, V, level, stop, dir) {
+    for (let j = Math.min(stop, V.length - 1) - 1; j >= 0; j--) {
+      const a = V[j] - level, b = V[j + 1] - level;
+      if (dir === "up" ? (a < 0 && b >= 0) : (a > 0 && b <= 0)) return crossAt(t, V, level, j);
+    }
+    return NaN;
+  }
+  function interp(x, xs, ys) {
+    if (x <= xs[0]) return ys[0];
+    const n = xs.length;
+    if (x >= xs[n - 1]) return ys[n - 1];
+    let lo = 0, hi = n - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (xs[mid] <= x) lo = mid; else hi = mid; }
+    return ys[lo] + (x - xs[lo]) * (ys[hi] - ys[lo]) / (xs[hi] - xs[lo]);
+  }
+
+  /* Primary measurements (metrics.py spike_metrics, primary definition). */
+  function measure(sim) {
+    const t = sim.t, V = sim.V, n = t.length;
+    const pk = peak(t, V), Qmin = p.C_m * (pk.V - REST.V);
+    const Vhalf = REST.V + 0.5 * (pk.V - REST.V);
+    const width = crossing(t, V, Vhalf, pk.i, "down") - lastCrossingBefore(t, V, Vhalf, pk.i, "up");
+    const restNaIn = -REST.I_Na;
+    const dNa = new Float64Array(n), dK = new Float64Array(n), cum = new Float64Array(n);
+    for (let i = 0; i < n; i++) { dNa[i] = -sim.INa[i] - restNaIn; dK[i] = sim.IK[i] - REST.I_K; }
+    for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + (t[i] - t[i - 1]) * (dNa[i] + dNa[i - 1]) / 2.0;
+    const QNa = cum[n - 1] - cum[0];
+    const Qdep = interp(pk.t, t, cum) - cum[0];
+    const r = QNa / Qmin;
+    const atpCm2 = QNa * 1e-9 / (p.NA_PER_ATP * p.ELEMENTARY_CHARGE_C);
+    return { V_peak: pk.V, t_peak: pk.t, i_peak: pk.i, Q_min: Qmin, width: width, Q_Na: QNa, Q_dep: Qdep,
+             ov_frac_A: (QNa - Qdep) / QNa, r: r, eta_pct: 100.0 / r,
+             atp_um2: atpCm2 / p.UM2_PER_CM2, dNa: dNa, dK: dK, cum: cum };
+  }
+
+  /* Full experiment at one temperature: spike run, passive control, spike criterion, metrics. */
+  function run(T, amp) {
+    const sim = simulate(T, amp, p.g_Na, null);
+    const passive = simulate(T, amp, 0.0, p.PASSIVE_RUN_MS);
+    const pk = peak(sim.t, sim.V), ppk = peak(passive.t, passive.V);
+    const spiked = pk.V > p.SPIKE_V_MIN_MV && pk.V - ppk.V > p.SPIKE_MARGIN_OVER_PASSIVE_MV;
+    return { T: T, sim: sim, passivePeak: ppk.V, spiked: spiked, m: measure(sim) };
+  }
+
+  return { rest: REST, phi: phi, simulate: simulate, measure: measure, run: run };
+};
+</script>
+
+<script>
+(function () {
+  "use strict";
+  const D = JSON.parse(document.getElementById("hh-data").textContent);
+  const HH = globalThis.HHModel(D.params);
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const fmt = (x, d) => (Number.isFinite(x) ? x.toFixed(d) : "–").replace("-", "−");
+
+  // ---------- small canvas plotting helpers ----------
+  function setup(cv) {
+    if (!cv.dataset.h) cv.dataset.h = cv.getAttribute("height");   // CSS height, read once
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = Number(cv.dataset.h);
+    cv.style.height = h + "px";
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    return { ctx: ctx, w: w, h: h };
+  }
+  function niceStep(range, n) {
+    const raw = range / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+    return mag * (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10);
+  }
+  function frame(c, box, xr, yr, xlabel, ylabel, nx, ny) {
+    const ctx = c.ctx, X = x => box.l + (x - xr[0]) / (xr[1] - xr[0]) * (box.r - box.l),
+          Y = y => box.b - (y - yr[0]) / (yr[1] - yr[0]) * (box.b - box.t);
+    ctx.font = "12px system-ui, -apple-system, sans-serif";
+    ctx.lineWidth = 1;
+    const sx = niceStep(xr[1] - xr[0], nx || 5), sy = niceStep(yr[1] - yr[0], ny || 4);
+    ctx.strokeStyle = css("--grid"); ctx.fillStyle = css("--ink2");
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let y = Math.ceil(yr[0] / sy) * sy; y <= yr[1] + 1e-9; y += sy) {
+      ctx.beginPath(); ctx.moveTo(box.l, Y(y)); ctx.lineTo(box.r, Y(y)); ctx.stroke();
+      ctx.fillText(fmt(y, sy < 1 ? 1 : 0), box.l - 6, Y(y));
+    }
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (let x = Math.ceil(xr[0] / sx) * sx; x <= xr[1] + 1e-9; x += sx) {
+      ctx.fillText(fmt(x, sx < 1 ? 1 : 0), X(x), box.b + 5);
+    }
+    ctx.strokeStyle = css("--axis");
+    ctx.beginPath(); ctx.moveTo(box.l, box.t); ctx.lineTo(box.l, box.b); ctx.lineTo(box.r, box.b); ctx.stroke();
+    ctx.fillStyle = css("--ink2");
+    if (xlabel) { ctx.textBaseline = "bottom"; ctx.fillText(xlabel, (box.l + box.r) / 2, c.h - 2); }
+    if (ylabel) {
+      ctx.save(); ctx.translate(12, (box.t + box.b) / 2); ctx.rotate(-Math.PI / 2);
+      ctx.textBaseline = "middle"; ctx.fillText(ylabel, 0, 0); ctx.restore();
+    }
+    return { X: X, Y: Y };
+  }
+  function polyline(ctx, xs, ys, X, Y, color, width, dash, i0, i1) {
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    for (let i = i0; i <= i1; i++) { const px = X(xs[i]), py = Y(ys[i]); i === i0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+    ctx.stroke(); ctx.restore();
+  }
+  function fillUnder(ctx, xs, ys, X, Y, color, i0, i1) {
+    ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(X(xs[i0]), Y(0));
+    for (let i = i0; i <= i1; i++) ctx.lineTo(X(xs[i]), Y(Math.max(0, ys[i])));
+    ctx.lineTo(X(xs[i1]), Y(0)); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  function vColor(v) {   // one-hue violet ramp, light = rest/AHP, dark = spike (same as the paper figures)
+    const stops = [css("--v0"), css("--v1"), css("--v2"), css("--v3")].map(hex => [1, 3, 5].map(k => parseInt(hex.slice(k, k + 2), 16)));
+    let f = (v - D.v_range[0]) / (D.v_range[1] - D.v_range[0]);
+    f = Math.min(1, Math.max(0, f)) * 3;
+    const i = Math.min(2, Math.floor(f)), u = f - i, a = stops[i], b = stops[i + 1];
+    return "rgb(" + a.map((c, k) => Math.round(c + u * (b[k] - c))).join(",") + ")";
+  }
+
+  // ---------- state ----------
+  const slider = $("temp");
+  slider.min = D.T_min; slider.max = D.T_max; slider.step = 0.05; slider.value = D.T_min;
+  let current = null;
+
+  $("rangeNote").textContent =
+    "Range: " + D.T_min + " °C up to " + D.T_max.toFixed(2) + " °C, where the travelling spike's peak at x = 4 cm " +
+    "falls below 0 mV (the spec's failure rule). Membrane stimulus: one 0.3 ms pulse of " +
+    D.amp_primary.toFixed(2) + " µA/cm² (2 × the 6.3 °C threshold).";
+  $("memHint").textContent = "V(t) and the ionic currents of one patch of membrane, recomputed with RK4 (Δt = " +
+    (D.params.DT_MEMBRANE_MS * 1000) + " µs) for exactly this temperature.";
+
+  function nearestSweep(list, T) {
+    let best = null;
+    for (const row of list) if (Math.abs(row.T - T) < 1e-6) best = row;
+    return best;
+  }
+
+  // ---------- membrane patch ----------
+  function drawMembrane() {
+    const res = current, s = res.sim, m = res.m, t = s.t;
+    const tEndShow = Math.min(t[t.length - 1], m.t_peak + 6 * (Number.isFinite(m.width) ? m.width : 1));
+    let i1 = t.length - 1; while (i1 > 0 && t[i1] > tEndShow) i1--;
+
+    let c = setup($("cvV"));
+    let box = { l: 52, r: c.w - 10, t: 10, b: c.h - 34 };
+    let f = frame(c, box, [0, t[i1]], [-90, 60], "time (ms)", "V (mV)");
+    c.ctx.save(); c.ctx.strokeStyle = css("--muted"); c.ctx.setLineDash([3, 3]);
+    c.ctx.beginPath(); c.ctx.moveTo(box.l, f.Y(HH.rest.V)); c.ctx.lineTo(box.r, f.Y(HH.rest.V)); c.ctx.stroke(); c.ctx.restore();
+    polyline(c.ctx, t, s.V, f.X, f.Y, css("--ink"), 2, null, 0, i1);
+    c.ctx.fillStyle = css("--ink2"); c.ctx.textAlign = "right"; c.ctx.textBaseline = "bottom";
+    c.ctx.fillText("rest " + fmt(HH.rest.V, 1) + " mV", box.r - 4, f.Y(HH.rest.V) - 3);
+    c.ctx.textAlign = "left";
+    if (res.spiked) c.ctx.fillText("peak " + fmt(m.V_peak, 1) + " mV", f.X(m.t_peak) + 6, f.Y(m.V_peak) - 2);
+
+    c = setup($("cvI"));
+    box = { l: 52, r: c.w - 10, t: 10, b: c.h - 34 };
+    let ymax = 0;
+    for (let i = 0; i <= i1; i++) ymax = Math.max(ymax, -s.INa[i], s.IK[i]);
+    f = frame(c, box, [0, t[i1]], [0, Math.max(100, ymax * 1.08)], "time (ms)", "current (µA/cm²)");
+    const naIn = Array.from(s.INa, v => -v), ov = new Float64Array(t.length);
+    for (let i = 0; i < t.length; i++) ov[i] = Math.min(Math.max(m.dNa[i], 0), Math.max(m.dK[i], 0));
+    fillUnder(c.ctx, t, ov, f.X, f.Y, css("--overlap"), 0, i1);
+    let iq = 0; while (iq < i1 && m.cum[iq + 1] <= m.Q_min) iq++;
+    if (res.spiked) fillUnder(c.ctx, t, naIn, f.X, f.Y, css("--qmin"), 0, iq);
+    polyline(c.ctx, t, naIn, f.X, f.Y, css("--na"), 2, null, 0, i1);
+    polyline(c.ctx, t, s.IK, f.X, f.Y, css("--k"), 2, null, 0, i1);
+
+    const ok = res.spiked;
+    $("roQna").textContent = ok ? fmt(m.Q_Na, 1) : "–";
+    $("roQmin").textContent = ok ? fmt(m.Q_min, 1) : "–";
+    $("roR").textContent = ok ? fmt(m.r, 3) : "–";
+    $("roEta").textContent = ok ? fmt(m.eta_pct, 1) + "%" : "–";
+    $("roAtp").textContent = ok ? (m.atp_um2 / 1e6).toFixed(2) + " M" : "–";
+    $("roOv").textContent = ok ? fmt(100 * m.ov_frac_A, 0) + "%" : "–";
+    const py = nearestSweep(D.sweep.membrane, res.T);
+    $("pyQna").textContent = py ? "Python: " + py.Q_Na.toFixed(1) : "";
+    $("pyQmin").textContent = py ? "Python: " + py.Q_min.toFixed(1) : "";
+    $("pyR").textContent = py ? "Python: " + py.r.toFixed(3) : "";
+    const st = $("memStatus");
+    if (ok) {
+      st.className = "status";
+      st.textContent = "Spike: peak " + fmt(m.V_peak, 1) + " mV, " + fmt(m.V_peak - res.passivePeak, 1) +
+        " mV above the passive control (ḡNa = 0). Width at half height " + fmt(m.width, 2) + " ms." +
+        (py ? " The Python sweep value at this exact temperature is shown in grey under each number." : "");
+    } else {
+      st.className = "status warn";
+      st.textContent = "No spike by the spec's rule (peak " + fmt(m.V_peak, 1) + " mV; needs > 0 mV and > 20 mV above the " +
+        "passive control, which peaked at " + fmt(res.passivePeak, 1) + " mV). The membrane still responds actively " +
+        "here; its peak just stays below 0 mV.";
+    }
+  }
+
+  // ---------- r vs T ----------
+  function drawR() {
+    const c = setup($("cvR")), box = { l: 46, r: c.w - 12, t: 12, b: c.h - 36 };
+    const f = frame(c, box, [5, 34], [0, 15], "temperature (°C)", "r = Q_Na / Q_min", 6, 5);
+    const ctx = c.ctx;
+    for (const ft of D.failure_spec) {
+      ctx.save(); ctx.strokeStyle = css("--muted"); ctx.setLineDash(ft.spike === "travelling" ? [5, 3] : ft.spike === "membrane_amp4x" ? [1, 3] : []);
+      ctx.beginPath(); ctx.moveTo(f.X(ft.T), box.t); ctx.lineTo(f.X(ft.T), box.b); ctx.stroke(); ctx.restore();
+    }
+    ctx.fillStyle = css("--muted"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("peak < 0 mV →", f.X(D.failure_spec[0].T) + 4, box.t + 2);
+    const mem = D.sweep.membrane, tr = D.sweep.travelling;
+    polyline(ctx, mem.map(r => r.T), mem.map(r => r.r), f.X, f.Y, css("--ink"), 2, null, 0, mem.length - 1);
+    polyline(ctx, tr.map(r => r.T), tr.map(r => r.r), f.X, f.Y, css("--ink"), 2, [6, 4], 0, tr.length - 1);
+    for (const r of mem) { ctx.fillStyle = css("--ink"); ctx.beginPath(); ctx.arc(f.X(r.T), f.Y(r.r), 3, 0, 7); ctx.fill(); }
+    for (const r of tr) {
+      ctx.fillStyle = css("--card"); ctx.strokeStyle = css("--ink"); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(f.X(r.T), f.Y(r.r), 3, 0, 7); ctx.fill(); ctx.stroke();
+    }
+    if (current) {
+      const T = current.T;
+      ctx.save(); ctx.strokeStyle = css("--accent"); ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.moveTo(f.X(T), box.t); ctx.lineTo(f.X(T), box.b); ctx.stroke(); ctx.restore();
+      if (current.spiked) {
+        ctx.fillStyle = css("--accent"); ctx.beginPath(); ctx.arc(f.X(T), f.Y(current.m.r), 6, 0, 7); ctx.fill();
+        ctx.strokeStyle = css("--card"); ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = css("--ink"); ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+        ctx.fillText("r = " + fmt(current.m.r, 2), f.X(T) + 9, f.Y(current.m.r) - 4);
+      }
+    }
+  }
+
+  // ---------- travelling spike ----------
+  const B64 = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
+  const cable = D.cable.temps.map(e => Object.assign({}, e, { q: B64(e.data) }));
+  let shown = null, playing = true, tModel = 0, lastTs = null;
+
+  function snapCable(T) {
+    let best = cable[0];
+    for (const e of cable) if (Math.abs(e.T - T) < Math.abs(best.T - T)) best = e;
+    if (best !== shown) { shown = best; tModel = 0; }
+    $("roTT").textContent = best.T + " °C";
+    $("roTheta").textContent = fmt(best.velocity, 2);
+    $("roRT").textContent = fmt(best.r, 3);
+    $("travHint").textContent = "Precomputed in Python at " + best.T + " °C (nearest sweep temperature to " +
+      Number(slider.value).toFixed(2) + " °C). Line: voltage along the axon. Bar: the axon coloured by voltage.";
+  }
+
+  function drawAxon() {
+    const e = shown, nx = D.cable.x.length, nf = e.n_frames;
+    const k = Math.min(nf - 1, Math.floor(tModel / e.dt_frame + 1e-9));
+    const c = setup($("cvAxon")), ctx = c.ctx;
+    const box = { l: 46, r: c.w - 12, t: 10, b: c.h - 100 };
+    const f = frame(c, box, [0, 5], [-90, 75], "position along the axon x (cm)", "V (mV)", 5, 4);
+    const V = new Float64Array(nx);
+    for (let i = 0; i < nx; i++) V[i] = D.cable.v_offset + D.cable.v_scale * e.q[k * nx + i];
+    ctx.save(); ctx.strokeStyle = css("--muted"); ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(box.l, f.Y(D.cable.rest)); ctx.lineTo(box.r, f.Y(D.cable.rest)); ctx.stroke(); ctx.restore();
+    polyline(ctx, D.cable.x, V, f.X, f.Y, css("--ink"), 2, null, 0, nx - 1);
+    // axon bar
+    const by = box.b + 26, bh = 24, dxp = (box.r - box.l) / (nx - 1);
+    for (let i = 0; i < nx; i++) {
+      ctx.fillStyle = vColor(V[i]);
+      ctx.fillRect(f.X(D.cable.x[i]) - dxp / 2, by, dxp + 0.6, bh);
+    }
+    ctx.strokeStyle = css("--border"); ctx.strokeRect(box.l - dxp / 2, by, box.r - box.l + dxp, bh);
+    const xm = f.X(2.5);
+    ctx.fillStyle = css("--ink2"); ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.beginPath(); ctx.moveTo(xm, by + bh + 2); ctx.lineTo(xm - 5, by + bh + 9); ctx.lineTo(xm + 5, by + bh + 9); ctx.fill();
+    ctx.fillText("measured at x = 2.5 cm", xm, by + bh + 11);
+    $("tclock").textContent = "t = " + (k * e.dt_frame).toFixed(2) + " ms";
+  }
+
+  function tick(ts) {
+    if (lastTs === null) lastTs = ts;
+    const dtReal = Math.min(0.1, (ts - lastTs) / 1000);
+    lastTs = ts;
+    if (playing && shown) {
+      tModel += dtReal * Number($("speed").value);
+      const dur = shown.n_frames * shown.dt_frame;
+      if (tModel > dur + 0.6 * Number($("speed").value)) tModel = 0;      // short hold, then loop
+    }
+    if (shown) drawAxon();
+    requestAnimationFrame(tick);
+  }
+  $("play").addEventListener("click", () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Play"; });
+
+  // ---------- update ----------
+  let pending = false;
+  function update() {
+    pending = false;
+    const T = Number(slider.value);
+    $("tval").textContent = T.toFixed(2) + " °C";
+    $("phi").textContent = "φ(T) = " + HH.phi(T).toFixed(2) + " (gates " + HH.phi(T).toFixed(2) + "× faster than at 6.3 °C)";
+    current = HH.run(T, D.amp_primary);
+    drawMembrane();
+    drawR();
+    snapCable(T);
+  }
+  slider.addEventListener("input", () => { if (!pending) { pending = true; requestAnimationFrame(update); } });
+  window.addEventListener("resize", () => { if (current) { drawMembrane(); drawR(); } });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (current) { drawMembrane(); drawR(); } });
+
+  $("foot").textContent = "Generated by export_web.py from results/ (" + D.generated + "). Model: Hodgkin & Huxley 1952 " +
+    "(NEURON hh.mod rates), φ(T) = 3^((T − 6.3)/10). Cable: a = 238 µm, R_i = 35.4 Ω·cm, Δx = 100 µm, Δt = 5 µs. " +
+    "Voltage maps are stored at 1-byte resolution (" + D.cable.v_scale.toFixed(2) + " mV) for display only.";
+  update();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

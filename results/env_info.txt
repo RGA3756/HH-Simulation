@@ -1,0 +1,10 @@
+OS: macOS-26.3.1-arm64-arm-64bit-Mach-O
+Machine (platform.machine): arm64
+Processor (platform.processor): arm
+Machine model (sysctl hw.model): Mac15,3
+CPU (sysctl machdep.cpu.brand_string): Apple M3
+Python: 3.14.7
+numpy: 2.5.4
+scipy: 1.18.1
+matplotlib: 3.11.2
+pandas: 3.0.6

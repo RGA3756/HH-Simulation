@@ -1,0 +1,12 @@
+check,T_C,grid,is_base_grid,model_value,unit,reference_value,reference,pct_difference,measured_value,pct_difference_vs_measured
+conduction velocity vs Hodgkin & Huxley 1952,18.5,"dx = 100 um, dt = 5 us",True,18.654947926727985,m/s,18.8,HH 1952 computed,-0.7715535812341263,21.2,-12.004962609773653
+conduction velocity vs Hodgkin & Huxley 1952,18.5,"dx = 50 um, dt = 2.5 us",False,18.692322785926766,m/s,18.8,HH 1952 computed,-0.5727511386874176,21.2,-11.828666104119025
+conduction velocity vs Hodgkin & Huxley 1952,18.5,"dx = 25 um, dt = 1.25 us",False,18.71009967265883,m/s,18.8,HH 1952 computed,-0.47819323053813495,21.2,-11.744812864816831
+RK4 vs DOP853: max |dV| during the spike (raw window),6.3,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,6.88830024841991e-06,mV,,DOP853,,,
+RK4 vs DOP853: max |dV| over the whole run,6.3,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,6.88830024841991e-06,mV,,DOP853,,,
+RK4 vs DOP853: relative difference in Q_Na (primary),6.3,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,2.9396031625480158e-08,fraction,1390.8026452295026,DOP853,,,
+RK4 vs DOP853: relative difference in r (primary),6.3,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,6.807026214816964e-08,fraction,13.237810812605527,DOP853,,,
+RK4 vs DOP853: max |dV| during the spike (raw window),25.0,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,1.353625079758558e-05,mV,,DOP853,,,
+RK4 vs DOP853: max |dV| over the whole run,25.0,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,1.353625079758558e-05,mV,,DOP853,,,
+RK4 vs DOP853: relative difference in Q_Na (primary),25.0,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,-7.18805406341673e-07,fraction,203.16046220253057,DOP853,,,
+RK4 vs DOP853: relative difference in r (primary),25.0,RK4 dt = 5 us vs DOP853 rtol=1e-10 atol=1e-12,True,-7.568371265688321e-07,fraction,2.530609238144046,DOP853,,,
