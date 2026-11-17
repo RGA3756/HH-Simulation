@@ -1,5 +1,5 @@
 """
-All paper figures (PNG at 300 dpi + PDF) from the files in results/.
+All figures (PNG at 300 dpi + PDF) from the files in results/.
 
 Every plotted number comes from results/*.csv or results/traces.npz, which
 sweep.run_experiments() wrote. Units: V mV, t ms, I µA/cm², Q nC/cm², T °C.
@@ -83,7 +83,7 @@ def eps_used(eps, model, quantity):
 
 
 def spec_fail(fail, spike):
-    row = fail[(fail.spike == spike) & fail.is_spec_definition.astype(bool)]
+    row = fail[(fail.spike == spike) & fail.is_main_rule.astype(bool)]
     return float(row.T_fail_C.iloc[0])
 
 

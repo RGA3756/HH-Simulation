@@ -19,7 +19,7 @@ from dataclasses import dataclass, asdict, replace
 
 
 # ---------------------------------------------------------------------------
-# Table 1: Hodgkin–Huxley membrane (identical to NEURON's hh.mod)
+# Hodgkin–Huxley membrane parameters (identical to NEURON's hh.mod)
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class MembraneParams:
@@ -114,8 +114,8 @@ SPIKE_V_MIN_MV = 0.0              # membrane spike: V_peak > 0 mV ...
 SPIKE_MARGIN_OVER_PASSIVE_MV = 20.0   # ... and V_peak > passive peak + 20 mV
 RAW_ONSET_MARGIN_MV = 1.0         # raw window (cable) starts when V > V_rest + 1 mV
 RAW_END_TOL_MV = 1.0              # raw window ends when V is within 1 mV of V_rest after the AHP
-# Diagnostics (NOT part of the spec; reported separately and labelled as such).
-# The spec's 0 mV rules mark where the spike PEAK falls below 0 mV. These two
+# Diagnostics (extra rules, reported separately and labelled as such).
+# The main 0 mV rules mark where the spike PEAK falls below 0 mV. These two
 # extra rules mark where the response really disappears:
 #   membrane: active response = V_peak > passive peak + 20 mV (no 0 mV requirement)
 #   cable:    non-decremental wave = depolarisation at 4.0 cm ≥ 90 % of that at 2.0 cm,

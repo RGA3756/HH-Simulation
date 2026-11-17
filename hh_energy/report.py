@@ -30,7 +30,7 @@ TESTS = {
     "6": ("Passive cable / units", "steady state matches cosh((L − x)/λ) and the input resistance within 1 %"),
     "7": ("Propagation", "travelling spike reaches x = 4 cm above 0 mV at 6.3 and 18.5 °C"),
 }
-VELOCITY_TOL_PCT = 5.0   # my criterion for the PASS/FAIL line of the HH 1952 benchmark (not in the spec)
+VELOCITY_TOL_PCT = 5.0   # PASS/FAIL line for the HH 1952 velocity benchmark (a project choice, not a standard)
 
 
 def f(x, d=3):
@@ -120,7 +120,7 @@ def eps(d, model, quantity, col="eps_used"):
 
 def fail_row(d, spike, spec=True):
     ft = d["failure_temps"]
-    return ft[(ft.spike == spike) & (ft.is_spec_definition.astype(bool) == spec)].iloc[0]
+    return ft[(ft.spike == spike) & (ft.is_main_rule.astype(bool) == spec)].iloc[0]
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +148,7 @@ def results_summary(d):
     vb = val[val.check.str.startswith("conduction velocity") & val.is_base_grid.astype(bool)].iloc[0]
     v_ok = abs(vb.pct_difference) < VELOCITY_TOL_PCT
     L.append(f"| Validation: HH 1952 velocity | θ at {f(vb.T_C, 1)} °C vs HH's computed 18.8 m/s "
-             f"(PASS if within ±{VELOCITY_TOL_PCT:g} %, a criterion I chose; the spec only asks for the % difference) | "
+             f"(PASS if within ±{VELOCITY_TOL_PCT:g} %, a threshold chosen for this project) | "
              f"**{'PASS' if v_ok else 'FAIL'}** | θ = {f(vb.model_value, 3)} m/s, difference {f(vb.pct_difference, 2)} % "
              f"(vs measured 21.2 m/s: {f(vb.pct_difference_vs_measured, 1)} %) |")
     js = d["js_consistency"]
@@ -174,7 +174,7 @@ def results_summary(d):
                  f"{f(t.Q_min, 1)} | {f(100 * m.ov_frac_A, 1)} % | {f(100 * t.ov_frac_A, 1)} % |")
     extra = [T for T in mem4.index if T not in cmp_.index]
     if extra:
-        L.append("\nAbove that, only the membrane spike at 4 × threshold still meets the spec's spike rule: "
+        L.append("\nAbove that, only the membrane spike at 4 × threshold still meets the main spike rule: "
                  + "; ".join(f"{f(T, 1)} °C: r = {f(mem4.loc[T].r, 3)}" for T in extra) + ".")
     L.append(f"\nΔr flag: \"real difference\" if |Δr| > 2ε with ε = sqrt(ε_mem² + ε_cab²) = "
              f"{f(float(cmp_.eps_combined.iloc[0]), 4)}, so 2ε = {f(float(cmp_.two_eps.iloc[0]), 4)}. "
@@ -182,16 +182,16 @@ def results_summary(d):
 
     # --- failure temperatures and epsilon
     L.append("## 3. Failure temperatures\n")
-    L.append("| Spike | Rule | Is the spec's rule? | T_fail (°C) |")
+    L.append("| Spike | Rule | Main rule? | T_fail (°C) |")
     L.append("|---|---|---|---|")
     for r in d["failure_temps"].itertuples():
-        L.append(f"| {r.spike} | {r.criterion} | {'yes' if r.is_spec_definition else 'no (diagnostic)'} | "
+        L.append(f"| {r.spike} | {r.criterion} | {'yes' if r.is_main_rule else 'no (diagnostic)'} | "
                  f"{f(r.T_fail_C, 3)} ± {f(r.half_width_C, 3)} (between {f(r.last_success_C, 4)} and {f(r.first_failure_C, 4)}) |")
-    L.append("\n**How to read this.** The spec's rules mark the temperature at which the spike *peak* falls below 0 mV. "
+    L.append("\n**How to read this.** The main rules mark the temperature at which the spike *peak* falls below 0 mV. "
              "The heat block in this model is gradual: just above those temperatures the response is still active and "
              "the travelling wave still runs the full length of the axon with a peak below 0 mV. The diagnostic rows "
-             "(not part of the spec) mark where the response really disappears. Write \"the spike peak falls below 0 mV "
-             "at …\", not \"conduction fails at …\", when quoting the spec values.\n")
+             "mark where the response really disappears. The main-rule values are therefore best described as \"the spike "
+             "peak falls below 0 mV at …\" rather than \"conduction fails at …\".\n")
     L.append("## 4. Numerical uncertainty ε (grid refinement)\n")
     L.append(f"ε = max |value(refined) − value(base)| over the two refined grids. Computed at 6.3 °C and at "
              f"T_warm = {f(T_warm, 1)} °C (highest coarse T with a travelling spike, {f(cfg['T_highest_propagating_coarse_C'], 1)} °C, minus 2 °C). "
@@ -237,11 +237,11 @@ def results_summary(d):
     L.append("## 6. Answers to the research question\n")
     L.extend(answers(d, mem, mem4, trav, cmp_))
     L.append("")
-    L.extend(paper_values(d, mem, trav))
+    L.extend(headline_values(d, mem, trav))
     return "\n".join(L) + "\n"
 
 
-CLEARLY_BIGGER = 2.0   # "[A] and [B] clearly bigger than [E]" = more than 2 × [E] (same factor as the 2ε flag)
+CLEARLY_BIGGER = 2.0   # differences count as real if more than 2 × the numerical error (same factor as the 2ε flag)
 
 
 def _rel_changes(ref):
@@ -270,8 +270,8 @@ def _rounded(x, uncertainty):
     return f"{x:.{_decimals(uncertainty)}f}".replace("-", "−")
 
 
-def paper_values(d, mem, trav):
-    """Section 7: the bracketed values of the paper sentence, each derived from results/."""
+def headline_values(d, mem, trav):
+    """Section 7: headline values with honest rounding, each derived from results/."""
     der = d["config"]["derived"]
     near = d["near_failure"].set_index("T_C")
     fg = d["failure_vs_grid"]
@@ -341,43 +341,44 @@ def paper_values(d, mem, trav):
     T_peak = max(pcts, key=pcts.get)
     jump_at_end = last_step[2] >= big_step[2] and last_step[2] > 0
 
-    L = ["## 7. Values for the paper sentence\n",
+    L = ["## 7. Headline values\n",
          "Every value below is computed from `results/` (sweep, refinement and the extra near-failure runs). "
          "Percentage difference = (r_propagating − r_membrane) ÷ r_membrane × 100, primary Q_Na definition, "
          "membrane stimulus 2 × threshold, base grid unless stated.\n",
-         "**Rounding rule.** [A] and [B] are rounded so that their last digit is no finer than how much they change "
-         "between the base and the finest grid at that temperature. [E] is given to one significant figure. "
-         f"[T_fail] is quoted as \"about N °C\" if refining the grid moves it by more than "
+         "**Rounding rule.** The two differences in r are rounded so that their last digit is no finer than how much "
+         "they change between the base and the finest grid at that temperature. The numerical error is given to "
+         "one significant figure. The failure temperature is given as \"about N °C\" if refining the grid moves "
+         f"it by more than "
          f"{P.T_FAIL_ABOUT_SHIFT_C:g} °C.\n",
-         "| Slot | Value to quote | Unrounded | Note |", "|---|---|---|---|",
-         f"| [T_fail] | **{T_quote}** | {f(ft.T_fail_C, 3)} °C (base grid) | Planned rule: V at x = 4.0 cm no longer "
+         "| Quantity | Rounded value | Unrounded | Note |", "|---|---|---|---|",
+         f"| Failure temperature of the travelling spike | **{T_quote}** | {f(ft.T_fail_C, 3)} °C (base grid) | Main rule: V at x = 4.0 cm no longer "
          f"exceeds 0 mV. Refining the grid moves it by up to {f(shift_t, 2)} °C (finest grid: {f(T_fine, 2)} °C). The wave "
          f"keeps travelling, with a peak below 0 mV, until {f(fd.T_fail_C, 2)} °C (diagnostic). |",
-         f"| [A] | **{A_quote}** | {f(A, 3)} % | at {f(T0, 1)} °C; finest grid {f(A_fine, 2)} % |",
-         f"| [B] | **{B_quote}** | {f(B, 3)} % | at {f(T_edge, 1)} °C, the warmest sweep temperature where both impulses exist "
+         f"| Difference in r at {f(T0, 1)} °C | **{A_quote}** | {f(A, 3)} % | at {f(T0, 1)} °C; finest grid {f(A_fine, 2)} % |",
+         f"| Difference in r near failure | **{B_quote}** | {f(B, 3)} % | at {f(T_edge, 1)} °C, the warmest sweep temperature where both impulses exist "
          f"(r cannot be measured at T_fail itself); finest grid {f(B_fine, 2)} % |",
-         f"| [higher/lower] | **{hl}** | – | r_propagating vs r_membrane at all {len(T_both)} sweep temperatures with both impulses |",
-         f"| [E] | **{E_quote}** | {f(E, 3)} % | largest change in r over every grid check ({big_e.model if E_edge >= E_plan else big.model}, "
+         f"| Travelling r compared with membrane r | **{hl}** | – | r_propagating vs r_membrane at all {len(T_both)} sweep temperatures with both impulses |",
+         f"| Numerical error in r | **{E_quote}** | {f(E, 3)} % | largest change in r over every grid check ({big_e.model if E_edge >= E_plan else big.model}, "
          f"{f(T_edge if E_edge >= E_plan else big.T_C, 1)} °C, finest vs base grid) |",
-         f"| Real difference? | **{'yes' if real else 'NO'}** | – | [A] = {f(A / E, 1)} × [E], [B] = {f(B / E, 1)} × [E]; "
-         f"\"clearly bigger\" taken as more than {CLEARLY_BIGGER:g} × [E] |",
-         f"| [more/less] | **{ov['Q_ov_B']['word']}** (definition B), **{ov['Q_ov_A']['word']}** (definition A) | – | "
+         f"| Real difference? | **{'yes' if real else 'NO'}** | – | the two differences are {f(A / E, 1)} × and "
+         f"{f(B / E, 1)} × the numerical error; \"real\" means more than {CLEARLY_BIGGER:g} × |",
+         f"| Overlap sodium in the travelling spike | **{ov['Q_ov_B']['word']}** (definition B), **{ov['Q_ov_A']['word']}** (definition A) | – | "
          f"overlap sodium per unit of capacitor charge (Q_ov/Q_min) in the propagating impulse; how much of the "
          f"difference it explains is below |",
          "",
-         "Copy-paste list:\n",
+         "Summary list:\n",
          "```",
-         f"T_fail: {T_quote}", f"A: {A_quote}", f"B: {B_quote}", f"higher/lower: {hl}", f"E: {E_quote}",
-         f"more/less: {ov['Q_ov_B']['word']}",
+         f"failure temperature (travelling): {T_quote}", f"difference in r at {f(T0, 1)} °C: {A_quote}",
+         f"difference in r near failure ({f(T_edge, 1)} °C): {B_quote}", f"travelling r vs membrane r: {hl}",
+         f"numerical error in r: {E_quote}", f"overlap sodium, travelling vs membrane: {ov['Q_ov_B']['word']}",
          "```",
          ""]
     if not real:
-        L.append(f"**There is no clear difference:** [A] and/or [B] are not more than {CLEARLY_BIGGER:g} × [E], so the "
-                 "difference between the two impulse types cannot be separated from numerical error. Do not use the "
-                 "sentence as written.\n")
+        L.append(f"**There is no clear difference:** at least one of the two differences is not more than {CLEARLY_BIGGER:g} × the numerical error, so the "
+                 "difference between the two impulse types cannot be separated from numerical error.\n")
 
     # --- Check 1
-    L.append("### Check 1: is [B] an edge effect?\n")
+    L.append("### Check 1: is the difference near failure an edge effect?\n")
     L.append("Near failure both impulses get smaller, which lowers Q_min = C_m ΔV and raises r even if sodium entry does "
              "not change. Since r_prop/r_mem = (Q_Na,prop/Q_Na,mem) ÷ (Q_min,prop/Q_min,mem), the gap splits exactly "
              "into a \"more sodium\" part and a \"smaller C_m ΔV\" part (shares computed on a log scale).\n")
@@ -397,7 +398,7 @@ def paper_values(d, mem, trav):
                  "the rest comes from a smaller C_m ΔV, so do not attribute the whole gap to overlap.")
     if jump_at_end:
         L.append(f"- **The gap jumps at the end** ({f(last_step[2], 2)} percentage points between {f(last_step[0], 1)} and "
-                 f"{f(last_step[1], 1)} °C, the largest step). Consider quoting {f(pcts[18.5], 2)} % at 18.5 °C instead.")
+                 f"{f(last_step[1], 1)} °C, the largest step). The value at 18.5 °C, {f(pcts[18.5], 2)} %, is a safer headline figure.")
     else:
         L.append(f"- **The trend is smooth.** The gap rises from {f(A, 2)} % at {f(T0, 1)} °C to a maximum of "
                  f"{f(pcts[T_peak], 2)} % at {f(T_peak, 1)} °C (largest single step {f(big_step[2], 2)} percentage points, "
@@ -408,12 +409,12 @@ def paper_values(d, mem, trav):
     L.append("")
 
     # --- Check 2
-    L.append("### Check 2: where was [E] measured, and does T_fail move with the grid?\n")
-    L.append(f"- The planned check ran at 6.3 °C and T_warm = {f(der['T_warm_C'], 1)} °C: largest change in r "
+    L.append("### Check 2: where was the numerical error measured, and does the failure temperature move with the grid?\n")
+    L.append(f"- The main refinement check ran at 6.3 °C and T_warm = {f(der['T_warm_C'], 1)} °C: largest change in r "
              f"{f(E_plan, 2)} % ({big.model}, {f(big.T_C, 1)} °C); after the first halving only {f(E_first, 2)} %; membrane "
              f"patch at most {g(E_mem, 1)} %.")
     L.append(f"- Repeated at {f(T_edge, 1)} °C, next to T_fail (extra check): largest change {f(E_edge, 2)} % ({big_e.model}). "
-             f"[E] above uses the larger of the two, {f(E, 2)} %.")
+             f"The numerical error above uses the larger of the two, {f(E, 2)} %.")
     L.append(f"- Failure temperature re-found on each grid (bisection to {P.FAILURE_GRID_TOL_C:g} °C):\n")
     L.append("| Impulse | Grid | T_fail (°C) | shift from base grid (°C) |")
     L.append("|---|---|---|---|")
@@ -424,18 +425,18 @@ def paper_values(d, mem, trav):
     L.append("")
     if shift_t > P.T_FAIL_ABOUT_SHIFT_C:
         L.append(f"- The propagating impulse's failure temperature moves by up to {f(shift_t, 2)} °C (more than "
-                 f"{P.T_FAIL_ABOUT_SHIFT_C:g} °C), so quote **{T_quote}**, not {f(ft.T_fail_C, 1)} °C. The successive shifts "
+                 f"{P.T_FAIL_ABOUT_SHIFT_C:g} °C), so it is best given as **{T_quote}** rather than {f(ft.T_fail_C, 1)} °C. The successive shifts "
                  f"({', '.join(f(s_, 3) for s_ in steps_t)} °C) get smaller, so the value is settling as the grid is refined.")
     else:
-        L.append(f"- The propagating impulse's failure temperature moves by at most {f(shift_t, 3)} °C, so {T_quote} is fine.")
+        L.append(f"- The propagating impulse's failure temperature moves by at most {f(shift_t, 3)} °C, so {T_quote} is precise enough.")
     L.append(f"- The membrane impulse's failure temperature does not move at this resolution "
              f"(largest shift {f(shift_m, 3)} °C, bisection tolerance {P.FAILURE_GRID_TOL_C:g} °C)."
              if shift_m < P.FAILURE_GRID_TOL_C else
              f"- The membrane impulse's failure temperature moves by at most {f(shift_m, 3)} °C.")
     L.append("")
 
-    # --- [more/less]
-    L.append("### [more/less]: does overlap explain the difference?\n")
+    # --- overlap
+    L.append("### Does overlap explain the difference?\n")
     L.append("Since r = Q_ov/Q_min + (Q_Na − Q_ov)/Q_min, the difference in r splits exactly into an overlap part and "
              "the rest.\n")
     L.append("| Overlap definition | T (°C) | Q_ov membrane | Q_ov propagating | share of Q_Na (membrane / propagating) | "
@@ -456,16 +457,16 @@ def paper_values(d, mem, trav):
         share_txt = ("bigger at every temperature" if all(shares_bigger) else
                      "smaller at every temperature" if not any(shares_bigger) else "bigger only at some temperatures")
         if e0 >= 50 and e1 >= 50:
-            verdict = "overlap explains most of the difference at both ends, so the sentence is supported"
+            verdict = "overlap explains most of the difference at both ends"
         elif e0 < 50 and e1 < 50:
-            verdict = "overlap explains less than half of the difference at both ends: delete the sentence rather than claim it"
+            verdict = "overlap explains less than half of the difference at both ends, so it is not the main explanation"
         else:
             verdict = (f"overlap explains most of the difference at one end but only {f(min(e0, e1), 0)} % at the other, "
-                       "so say it explains the difference partly, or only at the temperature where it does")
+                       "so it is only a partial explanation")
         L.append(f"- Definition {o['name']}: the propagating impulse has **{o['word']}** overlap sodium per unit of "
                  f"capacitor charge; it explains {f(e0, 0)} % of the r difference at {f(T0, 1)} °C and {f(e1, 0)} % at "
                  f"{f(T_edge, 1)} °C; {verdict}. As a share of Q_Na, the propagating impulse's overlap is {share_txt}, so "
-                 "write \"more overlap sodium\", not \"a larger overlap fraction\".")
+                 "the difference is in the amount of overlap sodium, not in the overlap fraction.")
     return L
 
 
@@ -501,7 +502,7 @@ def answers(d, mem, mem4, trav, cmp_):
              f"Δr is {f(cmp_.delta_r_amp4x.min(), 3)}–{f(cmp_.delta_r_amp4x.max(), 3)} over the same range, so the "
              f"membrane estimate is not unique.")
     s.append(f"5. **Warm limit.** The spike peak falls below 0 mV at {f(ft_m.T_fail_C, 2)} °C (membrane, 2 ×) and "
-             f"{f(ft_t.T_fail_C, 2)} °C (travelling, spec rule), but the travelling wave keeps running without decaying "
+             f"{f(ft_t.T_fail_C, 2)} °C (travelling, main rule), but the travelling wave keeps running without decaying "
              f"until {f(dg_t.T_fail_C, 2)} °C (diagnostic rule).")
     return s
 
@@ -514,7 +515,7 @@ def methods_fill_in(d):
     der = cfg["derived"]
     T_warm = der["T_warm_C"]
     js = d["js_consistency"]
-    L = ["# Values for the Methods section\n",
+    L = ["# Methods details\n",
          f"*Generated automatically by `run_all.py` on {datetime.datetime.now():%Y-%m-%d %H:%M}. "
          "Every value is read from `results/`.*\n",
          "## Computer and software\n",
@@ -573,7 +574,7 @@ def methods_fill_in(d):
     c = d["comparison"]
     rce = _rel_changes(d["refinement_edge"])
     big_e = rce.loc[rce.rel_pct.abs().idxmax()]
-    L.append(f"- Extra check, not part of the planned method: the same refinement at {f(der['T_edge_C'], 1)} °C (warmest "
+    L.append(f"- Extra robustness check: the same refinement at {f(der['T_edge_C'], 1)} °C (warmest "
              f"sweep temperature with both impulses) changes r by at most {f(abs(big_e.rel_pct), 2)} % ({big_e.model}).")
     L.append(f"- Combined ε for Δr = sqrt(ε_mem² + ε_cab²) = **{f(float(c.eps_combined.iloc[0]), 4)}**; "
              f"flag threshold 2ε = {f(float(c.two_eps.iloc[0]), 4)}.")
@@ -582,12 +583,12 @@ def methods_fill_in(d):
           f"(6.3 °C, then 2 °C steps from 8 °C, plus 18.5 °C, until every spike type had failed)."]
     L += ["", "## Failure temperatures (bisection to 0.05 °C)\n"]
     for r in d["failure_temps"].itertuples():
-        tag = "" if r.is_spec_definition else " — DIAGNOSTIC, not the spec's rule"
+        tag = "" if r.is_main_rule else " — diagnostic rule"
         L.append(f"- {r.spike}: **{f(r.T_fail_C, 3)} ± {f(r.half_width_C, 3)} °C** ({r.criterion}){tag}")
     fg = d["failure_vs_grid"]
     for spike in ("travelling", "membrane_amp2x"):
         rows = fg[fg.spike == spike].sort_values("level")
-        L.append(f"- Extra check, not part of the planned method: {spike} failure temperature re-found on each refinement "
+        L.append(f"- Extra robustness check: {spike} failure temperature re-found on each refinement "
                  f"grid (bisection to {P.FAILURE_GRID_TOL_C:g} °C): " + ", ".join(f"{f(T, 3)} °C" for T in rows.T_fail_C)
                  + f" (largest shift from the base grid {f(rows.shift_from_base_C.abs().max(), 3)} °C)")
     L += ["", "## Validation against Hodgkin & Huxley (1952)\n"]

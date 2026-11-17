@@ -1,4 +1,4 @@
-OS: macOS-26.3.1-arm64-arm-64bit-Mach-O
+OS: macOS-27.0.1-arm64-arm-64bit-Mach-O
 Machine (platform.machine): arm64
 Processor (platform.processor): arm
 Machine model (sysctl hw.model): Mac15,3

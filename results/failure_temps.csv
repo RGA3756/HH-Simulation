@@ -1,7 +1,7 @@
-spike,criterion,is_spec_definition,coarse_last_success_C,coarse_first_failure_C,last_success_C,first_failure_C,T_fail_C,half_width_C,monotonic_on_coarse_grid
-membrane_amp2x,V_peak > 0 mV and > passive peak + 20 mV (spec),True,28.0,30.0,28.78125,28.8125,28.796875,0.015625,True
-membrane_amp4x,V_peak > 0 mV and > passive peak + 20 mV (spec),True,32.0,34.0,33.0,33.03125,33.015625,0.015625,True
-travelling,V(x = 4.0 cm) > 0 mV (spec),True,28.0,30.0,28.84375,28.875,28.859375,0.015625,True
+spike,criterion,is_main_rule,coarse_last_success_C,coarse_first_failure_C,last_success_C,first_failure_C,T_fail_C,half_width_C,monotonic_on_coarse_grid
+membrane_amp2x,V_peak > 0 mV and > passive peak + 20 mV (main rule),True,28.0,30.0,28.78125,28.8125,28.796875,0.015625,True
+membrane_amp4x,V_peak > 0 mV and > passive peak + 20 mV (main rule),True,32.0,34.0,33.0,33.03125,33.015625,0.015625,True
+travelling,V(x = 4.0 cm) > 0 mV (main rule),True,28.0,30.0,28.84375,28.875,28.859375,0.015625,True
 membrane_amp2x,DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement),False,32.0,34.0,33.09375,33.125,33.109375,0.015625,True
 membrane_amp4x,DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement),False,38.0,40.0,39.8125,39.84375,39.828125,0.015625,True
 travelling,DIAGNOSTIC: depolarisation at 4.0 cm >= 90% of that at 2.0 cm (>= 20 mV),False,32.0,34.0,33.5,33.53125,33.515625,0.015625,True

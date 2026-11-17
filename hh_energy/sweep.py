@@ -190,7 +190,7 @@ def failure_temperatures(status, amps, log=print):
 
 
 # ---------------------------------------------------------------------------
-# 2b. Diagnostic failure temperatures (NOT part of the spec; labelled as such)
+# 2b. Diagnostic failure temperatures (extra rules, reported separately and labelled as such)
 # ---------------------------------------------------------------------------
 def membrane_active(T_C, amp, dt=P.DT_MEMBRANE_MS):
     """Diagnostic: active response > passive peak + 20 mV, without the 0 mV requirement."""
@@ -207,9 +207,9 @@ def wave_nondecremental(run):
 
 
 SPEC_CRITERIA = {
-    "membrane_amp2x": "V_peak > 0 mV and > passive peak + 20 mV (spec)",
-    "membrane_amp4x": "V_peak > 0 mV and > passive peak + 20 mV (spec)",
-    "travelling": "V(x = 4.0 cm) > 0 mV (spec)",
+    "membrane_amp2x": "V_peak > 0 mV and > passive peak + 20 mV (main rule)",
+    "membrane_amp4x": "V_peak > 0 mV and > passive peak + 20 mV (main rule)",
+    "travelling": "V(x = 4.0 cm) > 0 mV (main rule)",
 }
 DIAG_CRITERIA = {
     "membrane_amp2x": "DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement)",
@@ -235,7 +235,7 @@ def diagnostic_failure_temperatures(amps, log=print):
                 break
         assert last_ok is not None, f"{name}: diagnostic fails already at {T} °C"
         lo, hi = bisect_failure(succeeds, last_ok, T)
-        out.append({"spike": name, "criterion": DIAG_CRITERIA[name], "is_spec_definition": False,
+        out.append({"spike": name, "criterion": DIAG_CRITERIA[name], "is_main_rule": False,
                     "coarse_last_success_C": last_ok, "coarse_first_failure_C": T,
                     "last_success_C": lo, "first_failure_C": hi, "T_fail_C": 0.5 * (lo + hi),
                     "half_width_C": 0.5 * (hi - lo), "monotonic_on_coarse_grid": True})
@@ -334,7 +334,7 @@ def epsilons(ref_df):
 
 
 # ---------------------------------------------------------------------------
-# 4b. Extra checks near the failure temperature (NOT part of the planned Methods)
+# 4b. Extra robustness checks near the failure temperature
 # ---------------------------------------------------------------------------
 def edge_checks(amps, status, fail_spec, log=print):
     """r of both impulse types close to the failure temperature, and grid refinement there.
@@ -366,7 +366,7 @@ def edge_checks(amps, status, fail_spec, log=print):
 
 
 def failure_vs_grid(amps, fail_spec, log=print):
-    """Re-find the spec failure temperatures on every refinement grid (bisection to FAILURE_GRID_TOL_C).
+    """Re-find the main-rule failure temperatures on every refinement grid (bisection to FAILURE_GRID_TOL_C).
 
     Uses the coarse bracket from the base-grid sweep; asserts that it still brackets the failure.
     """
@@ -477,15 +477,15 @@ def run_experiments(results_dir, log=print):
     rows, status, mem_traces, cab_runs = coarse_sweep(amps, log)
     sweep_df = pd.DataFrame(rows)
 
-    log("Failure temperatures (spec criteria):")
+    log("Failure temperatures (main 0 mV rules):")
     fail_df = failure_temperatures(status, amps, log)
     fail_df.insert(1, "criterion", [SPEC_CRITERIA[s] for s in fail_df.spike])
-    fail_df.insert(2, "is_spec_definition", True)
-    log("Failure temperatures (diagnostic criteria, not in the spec):")
+    fail_df.insert(2, "is_main_rule", True)
+    log("Failure temperatures (diagnostic rules):")
     diag_df = diagnostic_failure_temperatures(amps, log)
     fail_all = pd.concat([fail_df, diag_df], ignore_index=True)
 
-    # Diagnostic flags for every coarse row (labelled, not used by the spec analysis)
+    # Diagnostic flags for every coarse row (labelled, not used by the main analysis)
     diag_flag = []
     for _, row in sweep_df.iterrows():
         if row.spike_type == "membrane":
@@ -506,9 +506,9 @@ def run_experiments(results_dir, log=print):
     eps_df = epsilons(ref_df)
     cmp_df = comparison(sweep_df, eps_df)
 
-    log("Extra checks near the failure temperature (not part of the planned Methods):")
+    log("Extra robustness checks near the failure temperature:")
     near_df, ref_edge_df, T_edge, T_last = edge_checks(amps, status, fail_df, log)
-    log("Failure temperature on each refinement grid (not part of the planned Methods):")
+    log("Failure temperature on each refinement grid (extra robustness check):")
     fail_grid_df = failure_vs_grid(amps, fail_df, log)
 
     # Write files

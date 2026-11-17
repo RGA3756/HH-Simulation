@@ -1,11 +1,11 @@
-# Values for the Methods section
+# Methods details
 
-*Generated automatically by `run_all.py` on 2026-10-22 18:27. Every value is read from `results/`.*
+*Generated automatically by `run_all.py` on 2026-11-17 21:49. Every value is read from `results/`.*
 
 ## Computer and software
 
 - Computer / machine model: Mac15,3; CPU: Apple M3 (arm64)
-- Operating system: macOS-26.3.1-arm64-arm-64bit-Mach-O
+- Operating system: macOS-27.0.1-arm64-arm-64bit-Mach-O
 - Python 3.14.7; numpy 2.5.4; scipy 1.18.1; matplotlib 3.11.2; pandas 3.0.6
 - Node.js (explorer consistency check only): v24.21.0
 
@@ -40,7 +40,7 @@
 - ε for Q_Na (travelling): 7.14e−01 nC/cm² at 6.3 °C, 9.92e−02 nC/cm² at 26.0 °C → used: **7.14e−01 nC/cm²**
 - ε for Q_min (membrane): 7.01e−05 nC/cm² at 6.3 °C, 1.05e−03 nC/cm² at 26.0 °C → used: **1.05e−03 nC/cm²**
 - ε for Q_min (travelling): 4.21e−02 nC/cm² at 6.3 °C, 4.84e−01 nC/cm² at 26.0 °C → used: **4.84e−01 nC/cm²**
-- Extra check, not part of the planned method: the same refinement at 28.0 °C (warmest sweep temperature with both impulses) changes r by at most 0.87 % (travelling).
+- Extra robustness check: the same refinement at 28.0 °C (warmest sweep temperature with both impulses) changes r by at most 0.87 % (travelling).
 - Combined ε for Δr = sqrt(ε_mem² + ε_cab²) = **0.0203**; flag threshold 2ε = 0.0407.
 
 ## Temperature grid
@@ -49,14 +49,14 @@
 
 ## Failure temperatures (bisection to 0.05 °C)
 
-- membrane_amp2x: **28.797 ± 0.016 °C** (V_peak > 0 mV and > passive peak + 20 mV (spec))
-- membrane_amp4x: **33.016 ± 0.016 °C** (V_peak > 0 mV and > passive peak + 20 mV (spec))
-- travelling: **28.859 ± 0.016 °C** (V(x = 4.0 cm) > 0 mV (spec))
-- membrane_amp2x: **33.109 ± 0.016 °C** (DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement)) — DIAGNOSTIC, not the spec's rule
-- membrane_amp4x: **39.828 ± 0.016 °C** (DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement)) — DIAGNOSTIC, not the spec's rule
-- travelling: **33.516 ± 0.016 °C** (DIAGNOSTIC: depolarisation at 4.0 cm >= 90% of that at 2.0 cm (>= 20 mV)) — DIAGNOSTIC, not the spec's rule
-- Extra check, not part of the planned method: travelling failure temperature re-found on each refinement grid (bisection to 0.01 °C): 28.848 °C, 28.988 °C, 29.051 °C (largest shift from the base grid 0.203 °C)
-- Extra check, not part of the planned method: membrane_amp2x failure temperature re-found on each refinement grid (bisection to 0.01 °C): 28.785 °C, 28.785 °C, 28.785 °C (largest shift from the base grid 0.000 °C)
+- membrane_amp2x: **28.797 ± 0.016 °C** (V_peak > 0 mV and > passive peak + 20 mV (main rule))
+- membrane_amp4x: **33.016 ± 0.016 °C** (V_peak > 0 mV and > passive peak + 20 mV (main rule))
+- travelling: **28.859 ± 0.016 °C** (V(x = 4.0 cm) > 0 mV (main rule))
+- membrane_amp2x: **33.109 ± 0.016 °C** (DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement)) — diagnostic rule
+- membrane_amp4x: **39.828 ± 0.016 °C** (DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement)) — diagnostic rule
+- travelling: **33.516 ± 0.016 °C** (DIAGNOSTIC: depolarisation at 4.0 cm >= 90% of that at 2.0 cm (>= 20 mV)) — diagnostic rule
+- Extra robustness check: travelling failure temperature re-found on each refinement grid (bisection to 0.01 °C): 28.848 °C, 28.988 °C, 29.051 °C (largest shift from the base grid 0.203 °C)
+- Extra robustness check: membrane_amp2x failure temperature re-found on each refinement grid (bisection to 0.01 °C): 28.785 °C, 28.785 °C, 28.785 °C (largest shift from the base grid 0.000 °C)
 
 ## Validation against Hodgkin & Huxley (1952)
 

@@ -40,7 +40,7 @@ def build_data():
     ok = sweep[sweep.spiked.astype(bool) & (sweep.qna_def == "primary")]
     mem = ok[(ok.spike_type == "membrane") & (ok.stim_variant == "amp2x")].sort_values("T_C")
     trav = ok[ok.spike_type == "travelling"].sort_values("T_C")
-    spec = fail[fail.is_spec_definition.astype(bool)]
+    spec = fail[fail.is_main_rule.astype(bool)]
 
     params = {k: (list(getattr(P, k)) if isinstance(getattr(P, k), tuple) else getattr(P, k)) for k in MODEL_PARAMS}
     params.update({k: float(v) for k, v in cfg["membrane"].items()})

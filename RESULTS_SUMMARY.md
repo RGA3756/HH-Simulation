@@ -1,6 +1,6 @@
 # Results summary
 
-*Generated automatically by `run_all.py` on 2026-10-22 18:27. Do not edit by hand: every number below is read from the files in `results/`.*
+*Generated automatically by `run_all.py` on 2026-11-17 21:49. Do not edit by hand: every number below is read from the files in `results/`.*
 
 ## 1. Checklist
 
@@ -13,7 +13,7 @@
 | Test 5: RK4 vs DOP853 | max \|ΔV\| < 0.01 mV at 6.3 and 25 °C (2 cases) | **PASS** | max \|dV\| = 6.89e-06 mV (limit 0.01 mV); max \|dV\| = 1.35e-05 mV (limit 0.01 mV) |
 | Test 6: Passive cable / units | steady state matches cosh((L − x)/λ) and the input resistance within 1 % (2 cases) | **PASS** | D = 0.336158 uA/cm2 per (mV/cm2); lambda = 0.7035 cm; max shape error = 6.0e-05; V(0) - V_rest = 0.52320 mV vs analytic 0.52321 mV (limit 1%) |
 | Test 7: Propagation | travelling spike reaches x = 4 cm above 0 mV at 6.3 and 18.5 °C (2 cases) | **PASS** | max V at x = 4.0 cm = 37.93 mV; max V at x = 4.0 cm = 25.27 mV |
-| Validation: HH 1952 velocity | θ at 18.5 °C vs HH's computed 18.8 m/s (PASS if within ±5 %, a criterion I chose; the spec only asks for the % difference) | **PASS** | θ = 18.655 m/s, difference −0.77 % (vs measured 21.2 m/s: −12.0 %) |
+| Validation: HH 1952 velocity | θ at 18.5 °C vs HH's computed 18.8 m/s (PASS if within ±5 %, a threshold chosen for this project) | **PASS** | θ = 18.655 m/s, difference −0.77 % (vs measured 21.2 m/s: −12.0 %) |
 | Explorer: JavaScript vs Python | r from the in-browser model within 0.5 % of Python at 6.3, 18.5 °C | **PASS** | 6.3 °C: r_JS = 13.237812, r_Py = 13.237812 (rel. diff. −8.05e−16); 18.5 °C: r_JS = 4.019942, r_Py = 4.019942 (rel. diff. 4.42e−16) |
 
 ## 2. Results by temperature
@@ -36,22 +36,22 @@ Primary definitions: Q_Na = ∫(Ĩ_Na − Ĩ_Na,rest) dt over the whole run; mem
 | 26.0 | 8.708 | 2.404 | 2.919 | 0.515 | real difference | 22.26 | 184.7 | 215.6 | 76.8 | 73.9 | 44.1 % | 54.2 % |
 | 28.0 | 10.848 | 2.214 | 2.671 | 0.457 | real difference | 22.83 | 152.1 | 181.2 | 68.7 | 67.8 | 38.2 % | 50.6 % |
 
-Above that, only the membrane spike at 4 × threshold still meets the spec's spike rule: 30.0 °C: r = 1.706; 32.0 °C: r = 1.546.
+Above that, only the membrane spike at 4 × threshold still meets the main spike rule: 30.0 °C: r = 1.706; 32.0 °C: r = 1.546.
 
 Δr flag: "real difference" if |Δr| > 2ε with ε = sqrt(ε_mem² + ε_cab²) = 0.0203, so 2ε = 0.0407. Every variant (raw Q_Na, overlap B, 4 × stimulus) is in `results/sweep.csv` and `results/comparison.csv`.
 
 ## 3. Failure temperatures
 
-| Spike | Rule | Is the spec's rule? | T_fail (°C) |
+| Spike | Rule | Main rule? | T_fail (°C) |
 |---|---|---|---|
-| membrane_amp2x | V_peak > 0 mV and > passive peak + 20 mV (spec) | yes | 28.797 ± 0.016 (between 28.7812 and 28.8125) |
-| membrane_amp4x | V_peak > 0 mV and > passive peak + 20 mV (spec) | yes | 33.016 ± 0.016 (between 33.0000 and 33.0312) |
-| travelling | V(x = 4.0 cm) > 0 mV (spec) | yes | 28.859 ± 0.016 (between 28.8438 and 28.8750) |
+| membrane_amp2x | V_peak > 0 mV and > passive peak + 20 mV (main rule) | yes | 28.797 ± 0.016 (between 28.7812 and 28.8125) |
+| membrane_amp4x | V_peak > 0 mV and > passive peak + 20 mV (main rule) | yes | 33.016 ± 0.016 (between 33.0000 and 33.0312) |
+| travelling | V(x = 4.0 cm) > 0 mV (main rule) | yes | 28.859 ± 0.016 (between 28.8438 and 28.8750) |
 | membrane_amp2x | DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement) | no (diagnostic) | 33.109 ± 0.016 (between 33.0938 and 33.1250) |
 | membrane_amp4x | DIAGNOSTIC: V_peak > passive peak + 20 mV (no 0 mV requirement) | no (diagnostic) | 39.828 ± 0.016 (between 39.8125 and 39.8438) |
 | travelling | DIAGNOSTIC: depolarisation at 4.0 cm >= 90% of that at 2.0 cm (>= 20 mV) | no (diagnostic) | 33.516 ± 0.016 (between 33.5000 and 33.5312) |
 
-**How to read this.** The spec's rules mark the temperature at which the spike *peak* falls below 0 mV. The heat block in this model is gradual: just above those temperatures the response is still active and the travelling wave still runs the full length of the axon with a peak below 0 mV. The diagnostic rows (not part of the spec) mark where the response really disappears. Write "the spike peak falls below 0 mV at …", not "conduction fails at …", when quoting the spec values.
+**How to read this.** The main rules mark the temperature at which the spike *peak* falls below 0 mV. The heat block in this model is gradual: just above those temperatures the response is still active and the travelling wave still runs the full length of the axon with a peak below 0 mV. The diagnostic rows mark where the response really disappears. The main-rule values are therefore best described as "the spike peak falls below 0 mV at …" rather than "conduction fails at …".
 
 ## 4. Numerical uncertainty ε (grid refinement)
 
@@ -85,36 +85,36 @@ Rules used for the verdicts: V_peak and Q_min inside the stated ranges; "order 1
 2. **The fall in r comes from Q_Na, not from Q_min.** For the membrane spike Q_Na falls 9.1-fold (1391 → 152 nC/cm²) while Q_min falls only 1.53-fold (105 → 69 nC/cm², which on its own would raise r); the share of Na⁺ entering after the peak (overlap A) drops from 89 % to 38 %.
 3. **The membrane patch does not reproduce the travelling spike beyond numerical uncertainty.** r_travel − r_membrane is positive at every temperature from 6.3 to 28.0 °C: Δr = 0.721 at 6.3 °C and 0.457 at 28.0 °C, against 2ε = 0.041; the patch underestimates r by 5.4 % at 6.3 °C and 20.6 % at 28.0 °C.
 4. **The size of that gap depends on the patch stimulus.** With 4 × threshold instead of 2 ×, Δr is 0.762–0.820 over the same range, so the membrane estimate is not unique.
-5. **Warm limit.** The spike peak falls below 0 mV at 28.80 °C (membrane, 2 ×) and 28.86 °C (travelling, spec rule), but the travelling wave keeps running without decaying until 33.52 °C (diagnostic rule).
+5. **Warm limit.** The spike peak falls below 0 mV at 28.80 °C (membrane, 2 ×) and 28.86 °C (travelling, main rule), but the travelling wave keeps running without decaying until 33.52 °C (diagnostic rule).
 
-## 7. Values for the paper sentence
+## 7. Headline values
 
 Every value below is computed from `results/` (sweep, refinement and the extra near-failure runs). Percentage difference = (r_propagating − r_membrane) ÷ r_membrane × 100, primary Q_Na definition, membrane stimulus 2 × threshold, base grid unless stated.
 
-**Rounding rule.** [A] and [B] are rounded so that their last digit is no finer than how much they change between the base and the finest grid at that temperature. [E] is given to one significant figure. [T_fail] is quoted as "about N °C" if refining the grid moves it by more than 0.1 °C.
+**Rounding rule.** The two differences in r are rounded so that their last digit is no finer than how much they change between the base and the finest grid at that temperature. The numerical error is given to one significant figure. The failure temperature is given as "about N °C" if refining the grid moves it by more than 0.1 °C.
 
-| Slot | Value to quote | Unrounded | Note |
+| Quantity | Rounded value | Unrounded | Note |
 |---|---|---|---|
-| [T_fail] | **about 29 °C** | 28.859 °C (base grid) | Planned rule: V at x = 4.0 cm no longer exceeds 0 mV. Refining the grid moves it by up to 0.20 °C (finest grid: 29.05 °C). The wave keeps travelling, with a peak below 0 mV, until 33.52 °C (diagnostic). |
-| [A] | **5.4%** | 5.447 % | at 6.3 °C; finest grid 5.35 % |
-| [B] | **21%** | 20.637 % | at 28.0 °C, the warmest sweep temperature where both impulses exist (r cannot be measured at T_fail itself); finest grid 19.59 % |
-| [higher/lower] | **higher** | – | r_propagating vs r_membrane at all 13 sweep temperatures with both impulses |
-| [E] | **0.9%** | 0.872 % | largest change in r over every grid check (travelling, 28.0 °C, finest vs base grid) |
-| Real difference? | **yes** | – | [A] = 6.2 × [E], [B] = 23.7 × [E]; "clearly bigger" taken as more than 2 × [E] |
-| [more/less] | **more** (definition B), **more** (definition A) | – | overlap sodium per unit of capacitor charge (Q_ov/Q_min) in the propagating impulse; how much of the difference it explains is below |
+| Failure temperature of the travelling spike | **about 29 °C** | 28.859 °C (base grid) | Main rule: V at x = 4.0 cm no longer exceeds 0 mV. Refining the grid moves it by up to 0.20 °C (finest grid: 29.05 °C). The wave keeps travelling, with a peak below 0 mV, until 33.52 °C (diagnostic). |
+| Difference in r at 6.3 °C | **5.4%** | 5.447 % | at 6.3 °C; finest grid 5.35 % |
+| Difference in r near failure | **21%** | 20.637 % | at 28.0 °C, the warmest sweep temperature where both impulses exist (r cannot be measured at T_fail itself); finest grid 19.59 % |
+| Travelling r compared with membrane r | **higher** | – | r_propagating vs r_membrane at all 13 sweep temperatures with both impulses |
+| Numerical error in r | **0.9%** | 0.872 % | largest change in r over every grid check (travelling, 28.0 °C, finest vs base grid) |
+| Real difference? | **yes** | – | the two differences are 6.2 × and 23.7 × the numerical error; "real" means more than 2 × |
+| Overlap sodium in the travelling spike | **more** (definition B), **more** (definition A) | – | overlap sodium per unit of capacitor charge (Q_ov/Q_min) in the propagating impulse; how much of the difference it explains is below |
 
-Copy-paste list:
+Summary list:
 
 ```
-T_fail: about 29 °C
-A: 5.4%
-B: 21%
-higher/lower: higher
-E: 0.9%
-more/less: more
+failure temperature (travelling): about 29 °C
+difference in r at 6.3 °C: 5.4%
+difference in r near failure (28.0 °C): 21%
+travelling r vs membrane r: higher
+numerical error in r: 0.9%
+overlap sodium, travelling vs membrane: more
 ```
 
-### Check 1: is [B] an edge effect?
+### Check 1: is the difference near failure an edge effect?
 
 Near failure both impulses get smaller, which lowers Q_min = C_m ΔV and raises r even if sodium entry does not change. Since r_prop/r_mem = (Q_Na,prop/Q_Na,mem) ÷ (Q_min,prop/Q_min,mem), the gap splits exactly into a "more sodium" part and a "smaller C_m ΔV" part (shares computed on a log scale).
 
@@ -138,10 +138,10 @@ Near failure both impulses get smaller, which lowers Q_min = C_m ΔV and raises 
 - **Not an edge effect.** Near T_fail the gap comes from extra sodium (93 % at 28.0 °C, 102 % at 28.781 °C), not from a smaller C_m ΔV: close to failure both impulses shrink by about the same amount. The smaller-C_m ΔV part is largest at the cold end (40 % of the gap at 6.3 °C).
 - **The trend is smooth.** The gap rises from 5.45 % at 6.3 °C to a maximum of 21.43 % at 26.0 °C (largest single step 2.21 percentage points, 16.0 → 18.0 °C), then changes by −0.79 points to 20.64 % at 28.0 °C and is 19.83 % at 28.781 °C. No jump at the end. For reference, the value at 18.5 °C is 15.77 % (not grid-checked at that temperature).
 
-### Check 2: where was [E] measured, and does T_fail move with the grid?
+### Check 2: where was the numerical error measured, and does the failure temperature move with the grid?
 
-- The planned check ran at 6.3 °C and T_warm = 26.0 °C: largest change in r 0.70 % (travelling, 26.0 °C); after the first halving only 0.47 %; membrane patch at most 1.3e−03 %.
-- Repeated at 28.0 °C, next to T_fail (extra check): largest change 0.87 % (travelling). [E] above uses the larger of the two, 0.87 %.
+- The main refinement check ran at 6.3 °C and T_warm = 26.0 °C: largest change in r 0.70 % (travelling, 26.0 °C); after the first halving only 0.47 %; membrane patch at most 1.3e−03 %.
+- Repeated at 28.0 °C, next to T_fail (extra check): largest change 0.87 % (travelling). The numerical error above uses the larger of the two, 0.87 %.
 - Failure temperature re-found on each grid (bisection to 0.01 °C):
 
 | Impulse | Grid | T_fail (°C) | shift from base grid (°C) |
@@ -153,10 +153,10 @@ Near failure both impulses get smaller, which lowers Q_min = C_m ΔV and raises 
 | travelling | Δx = 50 µm, Δt = 2.5 µs | 28.988 ± 0.004 | 0.141 |
 | travelling | Δx = 25 µm, Δt = 1.25 µs | 29.051 ± 0.004 | 0.203 |
 
-- The propagating impulse's failure temperature moves by up to 0.20 °C (more than 0.1 °C), so quote **about 29 °C**, not 28.9 °C. The successive shifts (0.141, 0.062 °C) get smaller, so the value is settling as the grid is refined.
+- The propagating impulse's failure temperature moves by up to 0.20 °C (more than 0.1 °C), so it is best given as **about 29 °C** rather than 28.9 °C. The successive shifts (0.141, 0.062 °C) get smaller, so the value is settling as the grid is refined.
 - The membrane impulse's failure temperature does not move at this resolution (largest shift 0.000 °C, bisection tolerance 0.01 °C).
 
-### [more/less]: does overlap explain the difference?
+### Does overlap explain the difference?
 
 Since r = Q_ov/Q_min + (Q_Na − Q_ov)/Q_min, the difference in r splits exactly into an overlap part and the rest.
 
@@ -167,5 +167,5 @@ Since r = Q_ov/Q_min + (Q_Na − Q_ov)/Q_min, the difference in r splits exactly
 | A: Na⁺ entering after the voltage peak | 6.3 | 1231.4 nC/cm² | 1254.9 nC/cm² | 88.5 % / 87.4 % | 11.72 / 12.20 | 66 % |
 | A: Na⁺ entering after the voltage peak | 28.0 | 58.1 nC/cm² | 91.6 nC/cm² | 38.2 % / 50.6 % | 0.85 / 1.35 | 110 % |
 
-- Definition B: Na⁺ entering while K⁺ flows out at the same time: the propagating impulse has **more** overlap sodium per unit of capacitor charge; it explains 70 % of the r difference at 6.3 °C and 31 % at 28.0 °C; overlap explains most of the difference at one end but only 31 % at the other, so say it explains the difference partly, or only at the temperature where it does. As a share of Q_Na, the propagating impulse's overlap is smaller at every temperature, so write "more overlap sodium", not "a larger overlap fraction".
-- Definition A: Na⁺ entering after the voltage peak: the propagating impulse has **more** overlap sodium per unit of capacitor charge; it explains 66 % of the r difference at 6.3 °C and 110 % at 28.0 °C; overlap explains most of the difference at both ends, so the sentence is supported. As a share of Q_Na, the propagating impulse's overlap is bigger only at some temperatures, so write "more overlap sodium", not "a larger overlap fraction".
+- Definition B: Na⁺ entering while K⁺ flows out at the same time: the propagating impulse has **more** overlap sodium per unit of capacitor charge; it explains 70 % of the r difference at 6.3 °C and 31 % at 28.0 °C; overlap explains most of the difference at one end but only 31 % at the other, so it is only a partial explanation. As a share of Q_Na, the propagating impulse's overlap is smaller at every temperature, so the difference is in the amount of overlap sodium, not in the overlap fraction.
+- Definition A: Na⁺ entering after the voltage peak: the propagating impulse has **more** overlap sodium per unit of capacitor charge; it explains 66 % of the r difference at 6.3 °C and 110 % at 28.0 °C; overlap explains most of the difference at both ends. As a share of Q_Na, the propagating impulse's overlap is bigger only at some temperatures, so the difference is in the amount of overlap sodium, not in the overlap fraction.

@@ -1,5 +1,5 @@
 == 1. Environment
-  OS: macOS-26.3.1-arm64-arm-64bit-Mach-O
+  OS: macOS-27.0.1-arm64-arm-64bit-Mach-O
   Machine (platform.machine): arm64
   Processor (platform.processor): arm
   Machine model (sysctl hw.model): Mac15,3
@@ -11,7 +11,7 @@
   pandas: 3.0.6
 == 2. Tests
   ..............                                                           [100%]
-  14 passed in 11.02s
+  14 passed in 11.86s
 == 3. Experiments
 Explicit-Euler stability number D·dt/(C_m·dx²) = 16.81 (explicit stepping needs ≤ 0.5, so backward Euler is used)
 Threshold at 6.3 °C (bisection):
@@ -33,11 +33,11 @@ Coarse temperature sweep:
   T =  30.0 °C  membrane 2x: False  4x: True   travelling: False
   T =  32.0 °C  membrane 2x: False  4x: True   travelling: False
   T =  34.0 °C  membrane 2x: False  4x: False  travelling: False
-Failure temperatures (spec criteria):
+Failure temperatures (main 0 mV rules):
   membrane_amp2x: fails between 28.7812 and 28.8125 °C
   membrane_amp4x: fails between 33.0000 and 33.0312 °C
   travelling: fails between 28.8438 and 28.8750 °C
-Failure temperatures (diagnostic criteria, not in the spec):
+Failure temperatures (diagnostic rules):
   membrane_amp2x (diagnostic): response disappears between 33.0938 and 33.1250 °C
   membrane_amp4x (diagnostic): response disappears between 39.8125 and 39.8438 °C
   travelling (diagnostic): response disappears between 33.5000 and 33.5312 °C
@@ -61,7 +61,7 @@ Grid refinement:
   membrane   26.0 °C dt = 5 us: r = 2.403628
   membrane   26.0 °C dt = 2.5 us: r = 2.403597
   membrane   26.0 °C dt = 1.25 us: r = 2.403598
-Extra checks near the failure temperature (not part of the planned Methods):
+Extra robustness checks near the failure temperature:
   28 °C (warmest sweep temperature with both impulses): r_membrane = 2.2139, r_travel = 2.6707, difference = 20.64 %
   28.781 °C (warmest temperature with both impulses (from the failure bisections)): r_membrane = 2.1635, r_travel = 2.5925, difference = 19.83 %
   grid refinement at 28 °C:
@@ -71,7 +71,7 @@ Extra checks near the failure temperature (not part of the planned Methods):
   membrane   28.0 °C dt = 5 us: r = 2.213867
   membrane   28.0 °C dt = 2.5 us: r = 2.213868
   membrane   28.0 °C dt = 1.25 us: r = 2.213869
-Failure temperature on each refinement grid (not part of the planned Methods):
+Failure temperature on each refinement grid (extra robustness check):
   travelling grid 0 (dx = 100 um, dt = 5 us): fails at 28.848 °C
   travelling grid 1 (dx = 50 um, dt = 2.5 us): fails at 28.988 °C
   travelling grid 2 (dx = 25 um, dt = 1.25 us): fails at 29.051 °C
@@ -94,4 +94,4 @@ Failure temperature on each refinement grid (not part of the planned Methods):
   JS vs Python at 18.5 °C: r_js = 4.019942, r_python = 4.019942, relative difference = 4.42e-16
 == 6. Documents
   wrote RESULTS_SUMMARY.md and METHODS_FILL_IN.md
-Done in 156 s.
+Done in 160 s.
